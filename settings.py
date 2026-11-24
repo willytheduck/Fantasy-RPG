@@ -1,0 +1,17 @@
+#display
+W, H = 480, 270
+SCALE = 3
+FPS = 60
+
+#colors
+BG_COLOR = (20,20,30)
+PLAYER_COLOR = (200,80,80)
+
+#player
+PLAYER_SIZE = 16
+PLAYER_SPEED = 80 #pixels/s
+
+#tiles
+TILE_SIZE = 16
+FLOOR_COLOR = (60,90,60)
+WALL_COLOR = (90,80,100)
