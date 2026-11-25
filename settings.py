@@ -15,3 +15,15 @@ PLAYER_SPEED = 80 #pixels/s
 TILE_SIZE = 16
 FLOOR_COLOR = (60,90,60)
 WALL_COLOR = (90,80,100)
+
+#walls (2.5D)
+WALL_HEIGHT = 10
+WALL_TOP_COLOR = (120,110,135)
+WALL_FRONT_COLOR = (70,60,85)
+
+#shadows
+SHADOW_COLOR = (0,0,0,90) #last's transparency
+
+#npcs
+NPC_SIZE = 16
+NPC_COLOR = (80,140,220)
