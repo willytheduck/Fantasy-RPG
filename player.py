@@ -5,6 +5,8 @@ class Player:
     def __init__(self ,x,y):
         self.pos = pygame.Vector2(x, y)
         self.size = PLAYER_SIZE
+        self.coins = 0
+        self.inventory = {}
 
     def rect(self):
         return pygame.Rect(int(self.pos.x), int(self.pos.y), self.size, self.size)

@@ -2,9 +2,12 @@ import pygame
 from settings import *
 
 class NPC:
-    def __init__(self, x,y,name,color=NPC_COLOR):
+    def __init__(self, x,y,name,get_lines, color=NPC_COLOR, on_done=None, marker=None):
         self.pos = pygame.Vector2(x,y)
         self.name = name
+        self.get_lines = get_lines
+        self.on_done = on_done
+        self.marker = marker #for "!" above NPC       
         self.size = NPC_SIZE
         #placeholder
         self.sprite = pygame.Surface((self.size, self.size))
