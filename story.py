@@ -17,7 +17,7 @@ def elder_lines():
         ]
     return [
         "* Ah, a new face! Welcome to Cinderwick, little one.",
-        "* Our home is the Wandering Keep, a castle that walks on iron legs. It has carried us accross the mountain for a hundred years",
+        "* Our home is the Wandering Keep, a castle that walks on iron legs. It has carried us across the mountain for a hundred years",
         "* But three nights ago, its fire spirit went quiet. The Keep stopped mid-step. Everyone is... a little nervous.",
         "* The spirit's ember fell into the Hollow Cave to the east. Bring it back, and the Keep will walk again.",
         "* Be careful. The monsters down there aren't evil, just very, very confused.",

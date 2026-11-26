@@ -1,11 +1,12 @@
-import pygame
 import math
+import pygame
 from settings import *
 from player import Player
 from world import World, TOWN_MAP
 from npc import NPC
 from enemy import OverworldEnemy
 from stats import make_enemy_stats
+from battle import Battle
 from utils import draw_shadow
 from ui import DialogueBox, ShopMenu
 import story
@@ -27,6 +28,7 @@ state = "town"
 talking_to = None
 
 # battle info
+battle = None
 battle_enemy = None
 battle_stats = None
 encounter_timer = 0.0
@@ -100,6 +102,8 @@ while running:
                     state = "menu"
                 elif event.key == pygame.K_4:
                     flags["has_ember"] = True  # for testing
+                elif event.key == pygame.K_5:
+                    player.stats.heal(999)
             elif state == "dialogue":
                 if event.key == pygame.K_e:
                     dialogue.advance()
@@ -116,20 +120,25 @@ while running:
                 elif event.key in (pygame.K_q, pygame.K_ESCAPE):
                     state = "town"
             elif state == "combat":
-                # temp
-                if event.key == pygame.K_e:
-                    player.coins += battle_stats.coin_reward
-                    player.xp += battle_stats.xp_reward
-                    enemies.remove(battle_enemy)
-                    battle_enemy = None
-                    state = "town"
-                elif event.key == pygame.K_q:
-                    battle_enemy.cooldown = 2.5
-                    battle_enemy = None
-                    state = "town"
+                battle.handle_key(event.key)
             elif state == "menu":
                 if event.key == pygame.K_1:
                     state = "town"
+    if state == "combat" and battle.result:
+        res = battle.result
+        if res == "win":
+            player.coins += battle_stats.coin_reward
+            player.xp += battle_stats.xp_reward
+            enemies.remove(battle_enemy)
+        elif res == "flee":
+            battle_enemy.cooldown = 2.5
+        elif res == "lose":
+            player.stats.hp = player.stats.max_hp
+            player.pos = pygame.Vector2(3*TILE_SIZE, 5*TILE_SIZE)
+            battle_enemy.cooldown = 2.5
+        battle = None
+        battle_enemy = None
+        state = "town"
 
     keys = pygame.key.get_pressed()
     canvas.fill(BG_COLOR)
@@ -150,7 +159,10 @@ while running:
     elif state == "encounter":
         encounter_timer -= dt
         if encounter_timer <= 0:
+            battle = Battle(ft, player, battle_stats, battle_enemy.sprite)
             state = "combat"
+    elif state == "combat":
+        battle.update(dt)
     # draw
     if state in ("town", "dialogue", "shop", "encounter"):
         # camera follow player
@@ -201,7 +213,7 @@ while running:
                 + str(player.coins)
             )
             canvas.blit(
-                ft.render("Coins: " + str(player.coins), False, TXT_COLOR), (6, 5)
+                ft.render(hud, False, TXT_COLOR), (6, 5)
             )
             canvas.blit(ft.render(story.quest_txt(), False, DIALOGUE_NC), (6, 16))
 
@@ -212,28 +224,8 @@ while running:
             canvas.blit(flash, (0, 0))
 
     elif state == "combat":
-        # temp
-        canvas.fill((0, 0, 0))
-        big = pygame.transform.scale(battle_enemy.sprite, (48, 48))
-        canvas.blit(big, (W // 2 - 24, 50))
-        lines = [
-            "* " + battle_stats.name + " blocks the way!",
-            battle_stats.name
-            + " HP "
-            + str(battle_stats.hp)
-            + "/"
-            + str(battle_stats.max_hp)
-            + " ATK "
-            + str(battle_stats.attack)
-            + " DEF "
-            + str(battle_stats.defense),
-            "Hero HP " + str(player.stats.hp),
-            "[E] win (temp)    [Q] run (temp)",
-        ]
-        y = 130
-        for line in lines:
-            canvas.blit(ft.render(line, False, TXT_COLOR), (W // 2 - 110, y))
-            y += 16
+        battle.draw(canvas)
+
     elif state == "menu":
         txt = ft.render("MENU (placeholder) - press 1", True, (255, 255, 255))
         canvas.blit(txt, (150, 130))

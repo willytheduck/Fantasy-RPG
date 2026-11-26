@@ -37,7 +37,7 @@ class DialogueBox:
         cur = ""
         for w in words:
             test = w if not cur else cur + " " +w
-            if self.ft.size(test)[0]<max_w:
+            if self.ft.size(test)[0]<=max_w:
                 cur =test
             else:
                 lines.append(cur)
