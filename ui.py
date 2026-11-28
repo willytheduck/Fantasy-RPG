@@ -130,7 +130,8 @@ class InventoryMenu:
     def move(self,d,player):
         names = self.names(player)
         if names:
-            self.cursor(self.cursor+d)% len(names)
+            self.cursor=(self.cursor + d)% len(names)
+        
         self.message = ""
     def use(self,player):
         names = self.names(player)
@@ -164,7 +165,8 @@ class InventoryMenu:
             sel = i == self.cursor
             color = DIALOGUE_NC if sel else TXT_COLOR
             prefix = "> " if sel else "  "
-            surface.blit(self.ft.render(prefix + name, False, color), (box.x+8,y))
+            tag = "    [equipped]" if player.equipment.get(ITEMS[name].kind) == name else ""
+            surface.blit(self.ft.render(prefix + name + tag, False, color), (box.x +8,y))
             cnt = self.ft.render("x" + str(player.inventory[name]), False, color)
             surface.blit(cnt, (box.right - cnt.get_width() - 8,y))
             y += 14
@@ -172,6 +174,6 @@ class InventoryMenu:
             desc = ITEMS[names[self.cursor]].desc
             surface.blit(self.ft.render(desc, False, TXT_COLOR),(box.x+8, box.bottom -52))
         if self.message:
-            surface.blit(self.ft.render(self.message, False, DIALOGUE_NC), (box.x++8, box.bottom-38))
+            surface.blit(self.ft.render(self.message, False, DIALOGUE_NC), (box.x+8, box.bottom-38))
         hint = self.ft.render("W/S move    E use    I/Q close", False, DIALOGUE_BORDER)
         surface.blit(hint, (box.x + 8, box.bottom - 14))

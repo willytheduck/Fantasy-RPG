@@ -11,28 +11,31 @@ class Player:
         self.stats = Stats("Hero", 30,6,2)
         self.xp = 0
         self.level = 1
+        self.equipment = {"weapon": None, "armor": None}
 
     def rect(self):
         return pygame.Rect(int(self.pos.x), int(self.pos.y), self.size, self.size)
 
     def xp_to_next(self):
-        return 10 * self.level
+        return XP_PER_LVL * self.level
 
     def gain_xp(self, amount):
+        gain = {"levels": 0, "hp":0, "atk":0, "def":0}
         self.xp += amount
-        gained = 0
         while self.xp >= self.xp_to_next():
             self.xp -= self.xp_to_next()
             self.level += 1
-            gained += 1
             s = self.stats
-            s.max_hp += 5
-            s.hp = min(s.max_hp, s.hp+5)
-            s.attack += 1
-            if self.level % 2 ==0:
+            s.max_hp += LVL_HP
+            s.hp = min(s.max_hp, s.hp +LVL_HP)
+            s.attack += LVL_ATK
+            gain["levels"] += 1
+            gain["hp"] += LVL_HP
+            gain["atk"] += LVL_ATK
+            if self.level % LVL_DEF_EVERY == 0:
                 s.defense += 1
-        return gained
-
+                gain["def"] += 1
+        return gain
     def blocked(self,world,npcs):
         r = self.rect()
         if world.collides(r):

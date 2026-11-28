@@ -18,12 +18,32 @@ def count_kind(inventory,kind):
     return sum(inventory.get(n,0) for n, it in ITEMS.items() if it.kind == kind)
 def use_item(player,name):
     it = ITEMS[name]
+    s = player.stats
+
     if it.kind == "heal":
-        s = player.stats
         if s.hp >= s.max_hp:
-            return False, "You're full HP. ",0 
+            return False, "You're at full HP.", 0
         restored = min(it.value, s.max_hp - s.hp)
         s.heal(restored)
         player.inventory[name] -= 1
-        return True, "You drink the " + name + ". Restored " +str(restored) + " HP!", restored
-    return False, "You can't use that yet.", 0
+        return True, "You drink the " + name + ". Restored " + str(restored) + " HP!", restored
+
+    if it.kind in ("weapon", "armor"):
+        slot = it.kind
+        old = player.equipment.get(slot)
+        if old == name:
+            return False, "You already have the " + name + " equipped.", 0
+        if slot == "weapon":
+            if old:
+                s.attack -= ITEMS[old].value
+            s.attack += it.value
+            stat = "ATK"
+        else:
+            if old:
+                s.defense -= ITEMS[old].value
+            s.defense += it.value
+            stat = "DEF"
+        player.equipment[slot] = name
+        return True, "You equipped the " + name + "! +" + str(it.value) + " " + stat, 0
+
+    return False, "You can't use that.", 0

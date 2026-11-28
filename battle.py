@@ -125,10 +125,13 @@ class Battle:
                 xp = self.enemy.xp_reward
                 coins = self.enemy.coin_reward
                 self.player.coins += coins
-                levels = self.player.gain_xp(xp)
-                self.message = ("* " + name + " was defeated! You gain " + str(xp)+ " XP and " + str(coins) + " coins.")
-                if levels > 0:
-                    self.message += " LEVEL UP! You are now LV " +str(self.player.level) + "!"
+                gain = self.player.gain_xp(xp)
+                self.message = ("* " +name+" was defeated! You gain " + str(xp) +" XP and "+str(coins)+ " coins.")
+                if gain["levels"] >0:
+                    txt = "+" + str(gain["hp"]) + " HP, +" + str(gain["atk"]) +" ATK"
+                    if gain["def"] >0:
+                        txt += ", +" + str(gain["def"]) + " DEF"
+                    self.message += " LEVEL UP! You are now LV " + str(self.player.level) + "! (" + txt + ")"
                 self.phase = "win_msg"
             else:
                 dmg, crit = self.damage(self.enemy, self.hero)
