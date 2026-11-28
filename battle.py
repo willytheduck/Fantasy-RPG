@@ -54,7 +54,10 @@ class Battle:
         self.player = player
         self.hero = player.stats
         self.enemy = enemy
-        self.sprite = pygame.transform.scale(enemy_sprite, (48,48))
+        self.sprite_size = 64 if enemy.boss else 48
+        self.sprite = pygame.transform.scale(enemy_sprite, (self.sprite_size, self.sprite_size))
+        self.enemy_turns = 0
+        self.charging = False
         self.options = ["Attack", "Item", "Run"]
         self.cursor = 0
         self.phase = "intro"
@@ -114,8 +117,12 @@ class Battle:
                 else:
                     self.phase = "notice" #turn no use
         elif option == "Run":
-            self.message = "* You fleed."
-            self.phase = "flee_msg"
+            if self.enemy.boss:
+                self.message = "* There's no excaping the " + self.enemy.name + "!"
+                self.phase = "notice" #turn no use
+            else:
+                self.message = "* You fled."
+                self.phase = "flee_msg"
     def advance(self):
         name = self.enemy.name
         if self.phase in ("intro", "notice"):
@@ -134,12 +141,25 @@ class Battle:
                     self.message += " LEVEL UP! You are now LV " + str(self.player.level) + "! (" + txt + ")"
                 self.phase = "win_msg"
             else:
-                dmg, crit = self.damage(self.enemy, self.hero)
-                self.hero.take_dmg(dmg)
-                self.message = "* " +name+" "+self.enemy.hit_txt +"! You take " +str(dmg) +" damage"
-                if crit:
-                    self.message += " Ouuu shiii, a critical hit!"
-                self.popups.append(Popup("-" + str(dmg) +("!" if crit else ""), 88, 196, (255,90,90)))
+                self.enemy_turns += 1
+                sp = self.enemy.special
+                if sp and self.charging:
+                    dmg, crit = self.damage(self.enemy, self.hero)
+                    dmg = int(dmg*sp["mult"])
+                    self.charging = False
+                    self.hero.take_dmg(dmg)
+                    self.message = "* " + name + " " + sp["hit"] +"! You take " + str(dmg) + " damage."
+                    self.popups.append(Popup("-" +str(dmg) +"!", 88,196,(255,90,90)))
+                elif sp and self.enem6_tyrbs % sp["every"] == 0:
+                    self.charging = True
+                    self.message = sp["charge"]
+                else:
+                    dmg, crit = self.damage(self.enemy, self.hero)
+                    self.hero.take_dmg(dmg)
+                    self.message = "* " + name + " " + self.enemy.hit_txt + "! You take "+str(dmg) +" damage."
+                    if crit:
+                        self.message += " Ouuu shiii, a critical hit!"
+                    self.popups.append(Popup("-" + str(dmg) + ("!" if crit else ""), 88, 196, (255,90,90)))
                 self.phase = "enemy_msg"
         elif self.phase == "enemy_msg":
             if not self.hero.is_alive():
@@ -171,8 +191,12 @@ class Battle:
         #enemy
         if self.phase != "win_msg":
             ox = int(math.sin(self.shake*60)*3) if self.shake > 0 else 0
-            pygame.draw.ellipse(surface, (0,0,0), (W//2-24,86,48,12))
-            surface.blit(self.sprite, (W//2-24 + ox, 40))
+            size = self.sprite_size
+            base_y = 98
+            pygame.draw.ellipse(surface, (0,0,0), (W//2-size//2,base_y-8, size, 12))
+            surface.blit(self.sprite, (W//2-24 + ox, base_y - size))
+            if self.charging:
+                pygame.draw.rect(surface,(255,80,60), (W//2 - size//2 -3, base_y - size - 3, size +6, size +6), 2)
         #message box
         box = pygame.Rect(8,140,W-16,50)
         bg = pygame.Surface(box.size, pygame.SRCALPHA)

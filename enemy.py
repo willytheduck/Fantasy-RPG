@@ -6,7 +6,7 @@ class OverworldEnemy:
     def __init__(self,x,y,kind):
         self.pos = pygame.Vector2(x,y)
         self.kind = kind
-        self.size = ENEMY_SIZE
+        self.size = ENEMY_TYPE[kind].get("size", ENEMY_SIZE)
         self.cooldown = 0.0 #cd for enemy
         #placeholder
         self.sprite = pygame.Surface((self.size, self.size))

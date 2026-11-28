@@ -6,6 +6,7 @@ from world import World, TOWN_MAP, DUNGEON_MAP
 from npc import NPC
 from enemy import OverworldEnemy
 from chest import Chest
+from door import Door
 from stats import make_enemy_stats
 from battle import Battle
 from utils import draw_shadow
@@ -72,6 +73,9 @@ areas = {
         ],
         "enemies": [],
         "chests": [],
+        "doors": [
+            Door(47,14,2,2,"dungeon", (5,16), "Hollow Cave", lock_flag="quest_accepted", lock_lines=["* A dark cave mouth yawns in front of you.", "* Maybe you should talk to the Elder first."], bounce=(-24,0)),
+        ],
         "spawn": (3,5),
     },
     "dungeon": {
@@ -86,12 +90,16 @@ areas = {
             OverworldEnemy(35*TILE_SIZE, 18*TILE_SIZE, "Mossling"),
             OverworldEnemy(40*TILE_SIZE,19*TILE_SIZE,"Dusty Knight"),
             OverworldEnemy(39*TILE_SIZE, 4*TILE_SIZE, "Dusty Knight"),
+            OverworldEnemy(41*TILE_SIZE, 28*TILE_SIZE, "Warden of Ash"),
         ],
         "chests": [
             Chest(8*TILE_SIZE, 14*TILE_SIZE, item="Star-berry Tea"),
             Chest(17*TILE_SIZE, 10*TILE_SIZE, coins=15),
             Chest(25*TILE_SIZE, 23*TILE_SIZE, coins=10, item="Star-berry Tea"),
             Chest(43*TILE_SIZE, 3*TILE_SIZE, coins=30, item="Patchwork Cloak"),
+        ],
+        "doors": [
+            Door(2,16,2,2,"town",(45,14), "Cinderwick"),
         ],
         "spawn": (5,16),
     },
@@ -102,16 +110,19 @@ world = areas["town"]["world"]
 npcs = areas["town"]["npcs"]
 enemies = areas["town"]["enemies"]
 chests = areas["town"]["chests"]
+doors = areas["town"]["doors"]
 
-def enter_area(name):
-    global current_area, world, npcs, enemies, chests
+def enter_area(name, spawn=None):
+    global current_area, world, npcs, enemies, chests, doors
     area = areas[name]
     current_area = name
     world = area["world"]
     npcs = area["npcs"]
     enemies = area["enemies"]
     chests = area["chests"]
-    player.pos = pygame.Vector2(area["spawn"][0]*TILE_SIZE, area["spawn"][1] *TILE_SIZE)
+    doors = area["doors"]
+    sx, sy = spawn if spawn else area["spawn"]
+    player.pos = pygame.Vector2(sx*TILE_SIZE, sy*TILE_SIZE)
 
 
 def find_nearby():
@@ -150,13 +161,11 @@ while running:
                     flags["has_ember"] = True  # for testing
                 elif event.key == pygame.K_5:
                     player.stats.heal(999)
-                elif event.key == pygame.K_6:
-                    enter_area("dungeon" if current_area == "town" else "town")
             elif state == "dialogue":
                 if event.key == pygame.K_e:
                     dialogue.advance()
                     if not dialogue.active:
-                        nxt = talking_to.on_done() if talking_to.on_done else None
+                        nxt = talking_to.on_done() if talking_to and talking_to.on_done else None
                         state = nxt or "town"
             elif state == "shop":
                 if event.key in (pygame.K_w, pygame.K_UP):
@@ -183,8 +192,17 @@ while running:
                     state = "town"
     if state == "combat" and battle.result:
         res = battle.result
+        story_lines = None
         if res == "win":
             enemies.remove(battle_enemy)
+            if battle_stats.boss:
+                flags["has_ember"] = True
+                story_lines = [
+                    "* The Warden of Ash crumbles into warm, quiet ash.",
+                    "* It was only keeping the ember warm. You can almost hear it say sorry.",
+                    "* In the middle of the ash, a tiny ember glows. It hums like a kettle.",
+                    "* You carefully pick it up. (Quest updated.)",
+                ]
         elif res == "flee":
             battle_enemy.cooldown = 2.5
         elif res == "lose":
@@ -194,12 +212,28 @@ while running:
         battle = None
         battle_enemy = None
         state = "town"
+        if story_lines:
+            talking_to = None
+            dialogue.start("Ember", story_lines)
+            state = "dialogue"
 
     keys = pygame.key.get_pressed()
     canvas.fill(BG_COLOR)
     # upd
     if state == "town":
         player.update(keys, dt, world, npcs + chests)
+        #doors
+        for d in doors:
+            if player.rect().colliderect(d.rect()):
+                if d.locked():
+                    player.pos += pygame.Vector2(d.bounce)
+                    talking_to = d
+                    dialogue.start(d.label, d.lock_lines)
+                    state = "dialogue"
+                else:
+                    enter_area(d.target, d.spawn)
+                break
+    if state == "town":
         for e in enemies:
             e.update(dt)
         for e in enemies:
@@ -226,6 +260,8 @@ while running:
         camera.x = max(0, min(camera.x, world.width - W))
         camera.y = max(0, min(camera.y, world.height - H))
         world.draw_floor(canvas, camera)
+        for d in doors:
+            d.draw(canvas, camera)
         # shadows
         draw_shadow(canvas, camera, player.rect())
         for npc in npcs:
