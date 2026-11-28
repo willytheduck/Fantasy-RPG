@@ -8,7 +8,7 @@ from enemy import OverworldEnemy
 from stats import make_enemy_stats
 from battle import Battle
 from utils import draw_shadow
-from ui import DialogueBox, ShopMenu
+from ui import DialogueBox, ShopMenu, InventoryMenu
 import story
 from story import flags
 
@@ -23,6 +23,7 @@ player = Player(3 * TILE_SIZE, 5 * TILE_SIZE)
 town = World(TOWN_MAP)
 dialogue = DialogueBox(ft)
 shop = ShopMenu(ft, story.SHOP_STOCK)
+inv_menu = InventoryMenu(ft)
 camera = pygame.Vector2(0, 0)
 state = "town"
 talking_to = None
@@ -98,6 +99,9 @@ while running:
                         dialogue.start(npc.name, npc.get_lines())
                         state = "dialogue"
                     # temp keys
+                elif event.key == pygame.K_i:
+                    inv_menu.reset()
+                    state = "inventory"
                 elif event.key == pygame.K_3:
                     state = "menu"
                 elif event.key == pygame.K_4:
@@ -118,6 +122,15 @@ while running:
                 elif event.key in (pygame.K_e, pygame.K_RETURN):
                     shop.buy(player)
                 elif event.key in (pygame.K_q, pygame.K_ESCAPE):
+                    state = "town"
+            elif state == "inventory":
+                if event.key in (pygame.K_w, pygame.K_UP):
+                    inv_menu.move(-1, player)
+                elif event.key in (pygame.K_s, pygame.K_DOWN):
+                    inv_menu.move(1, player)
+                elif event.key in (pygame.K_e, pygame.K_RETURN):
+                    inv_menu.use(player)
+                elif event.key in (pygame.K_q, pygame.K_i, pygame.K_ESCAPE):
                     state = "town"
             elif state == "combat":
                 battle.handle_key(event.key)
@@ -162,7 +175,7 @@ while running:
     elif state == "combat":
         battle.update(dt)
     # draw
-    if state in ("town", "dialogue", "shop", "encounter"):
+    if state in ("town", "dialogue", "shop", "encounter", "inventory"):
         # camera follow player
         camera.x = player.pos.x + player.size / 2 - W / 2
         camera.y = player.pos.y + player.size / 2 - H / 2
@@ -215,10 +228,12 @@ while running:
                 ft.render(hud, False, TXT_COLOR), (6, 5)
             )
             canvas.blit(ft.render(story.quest_txt(), False, DIALOGUE_NC), (6, 16))
-
+            canvas.blit(ft.render("[I] Bag", False, (140,140,160)), (6,27))
         dialogue.draw(canvas)
         if state == "shop":
             shop.draw(canvas, player)
+        if state == "inventory":
+            inv_menu.draw(canvas, player)
         if state == "encounter" and int(encounter_timer * 10) % 2 == 0:
             canvas.blit(flash, (0, 0))
 

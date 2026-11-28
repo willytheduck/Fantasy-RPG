@@ -16,3 +16,14 @@ def ownd_of_kind(inventory, kind):
     return [n for n, it in ITEMS.items() if it.kind == kind and inventory.get(n, 0)> 0]
 def count_kind(inventory,kind):
     return sum(inventory.get(n,0) for n, it in ITEMS.items() if it.kind == kind)
+def use_item(player,name):
+    it = ITEMS[name]
+    if it.kind == "heal":
+        s = player.stats
+        if s.hp >= s.max_hp:
+            return False, "You're full HP. ",0 
+        restored = min(it.value, s.max_hp - s.hp)
+        s.heal(restored)
+        player.inventory[name] -= 1
+        return True, "You drink the " + name + ". Restored " +str(restored) + " HP!", restored
+    return False, "You can't use that yet.", 0

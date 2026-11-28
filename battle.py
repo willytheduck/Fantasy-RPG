@@ -3,6 +3,7 @@ import random
 import pygame
 from settings import *
 from items import ITEMS, ownd_of_kind, count_kind
+from items import ITEMS, ownd_of_kind, count_kind, use_item
 
 def wrap_txt(ft, txt, max_w):
     words = txt.split(" ")
@@ -103,18 +104,15 @@ class Battle:
             usable = ownd_of_kind(self.player.inventory, "heal")
             if not usable:
                 self.message = "* You have no usable items."
-                self.phase = "notice" #no turn used
-            elif self.hero.hp >= self.hero.max_hp:
-                self.message = "* You're at full HP."
-                self.phase = "notice" #no turn used
+                self.phase = "notice" #turn no use
             else:
-                name = usable[0]
-                self.player.inventory[name] -= 1
-                restored = min(ITEMS[name].value, self.hero.max_hp - self.hero.hp)
-                self.hero.heal(restored)
-                self.message = "* You drink the " + name +". Restored " + str(restored) +" HP!"
-                self.popups.append(Popup("+" + str(restored), 88, 196, (120,230,140)))
-                self.phase = "player_msg" #turn used
+                used, msg, amount = use_item(self.player, usable[0])
+                self.message = "* " + msg
+                if used:
+                    self.popups.append(Popup("+" +str(amount), 88,196,(120,230,140)))
+                    self.phase = "player_msg" #turn used
+                else:
+                    self.phase = "notice" #turn no use
         elif option == "Run":
             self.message = "* You fleed."
             self.phase = "flee_msg"

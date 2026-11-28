@@ -1,5 +1,6 @@
 import pygame
 from settings import *
+from items import ITEMS, use_item
 
 class DialogueBox:
     def __init__(self, ft):
@@ -116,3 +117,61 @@ class ShopMenu:
             surface.blit(self.ft.render(self.message, False, DIALOGUE_NC), (box.x + 8, box.bottom - 26))
         hint = self.ft.render("W/S move    E buy    Q leave", False, DIALOGUE_BORDER)
         surface.blit(hint, (box.x+8, box.bottom-14))
+class InventoryMenu:
+    def __init__(self, ft):
+        self.ft = ft
+        self.cursor = 0
+        self.message = ""
+    def names(self,player):
+        return [n for n in ITEMS if player.inventory.get(n,0)>0]
+    def reset(self):
+        self.cursor = 0
+        self.message = ""
+    def move(self,d,player):
+        names = self.names(player)
+        if names:
+            self.cursor(self.cursor+d)% len(names)
+        self.message = ""
+    def use(self,player):
+        names = self.names(player)
+        if not names:
+            return
+        self.cursor = min(self.cursor, len(names) -1)
+        used, msg, _ = use_item(player, names[self.cursor])
+        self.message = msg
+        names = self.names(player)
+        self.cursor = min(self.cursor, max(0, len(names)-1))
+    def draw(self,surface, player):
+        names = self.names(player)
+        self.cursor = min(self.cursor, max(0, len(names) -1))
+        box = pygame.Rect(W//2 - 150,24,300,210)
+        bg = pygame.Surface(box.size, pygame.SRCALPHA)
+        bg.fill(DIALOGUE_BG)
+        surface.blit(bg, box.topleft)
+        pygame.draw.rect(surface, DIALOGUE_BORDER, box,1)
+
+        surface.blit(self.ft.render("Inventory", False, DIALOGUE_NC), (box.x + 8, box.y+6))
+        coins = self.ft.render("Coins: "+ str(player.coins), False, TXT_COLOR)
+        surface.blit(coins, (box.right - coins.get_width() - 8, box.y + 6))
+
+        s = player.stats
+        info = ("LV " + str(player.level) + "   HP" +str(s.hp) + "/" + str(s.max_hp) + "    ATK " + str(s.attack) + "   DEF " + str(s.defense))
+        surface.blit(self.ft.render(info, False, TXT_COLOR), (box.x +8, box.y + 22))
+        y = box.y + 44
+        if not names:
+            surface.blit(self.ft.render("Your bag is empty.", False, TXT_COLOR),(box.x+8,y))
+        for i, name in enumerate(names[:7]):
+            sel = i == self.cursor
+            color = DIALOGUE_NC if sel else TXT_COLOR
+            prefix = "> " if sel else "  "
+            surface.blit(self.ft.render(prefix + name, False, color), (box.x+8,y))
+            cnt = self.ft.render("x" + str(player.inventory[name]), False, color)
+            surface.blit(cnt, (box.right - cnt.get_width() - 8,y))
+            y += 14
+        if names:
+            desc = ITEMS[names[self.cursor]].desc
+            surface.blit(self.ft.render(desc, False, TXT_COLOR),(box.x+8, box.bottom -52))
+        if self.message:
+            surface.blit(self.ft.render(self.message, False, DIALOGUE_NC), (box.x++8, box.bottom-38))
+        hint = self.ft.render("W/S move    E use    I/Q close", False, DIALOGUE_BORDER)
+        surface.blit(hint, (box.x + 8, box.bottom - 14))
