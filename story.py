@@ -1,3 +1,4 @@
+from items import ITEMS
 #mostly temp
 flags = {
     "quest_accepted": False,
@@ -39,7 +40,5 @@ def quest_txt():
 
 #name, price, desc
 SHOP_STOCK = [
-    ("Star-berry Tea", 10, "Restores a little HP."),
-    ("Iron Spoon", 20, "A questionable weapon."),
-    ("Patchwork Cloak", 30, "Slightly warm armor.")
+    (it.name, it.price, it.desc) for it in ITEMS.values()
 ]

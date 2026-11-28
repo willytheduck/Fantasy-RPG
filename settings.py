@@ -37,3 +37,8 @@ TXT_COLOR = (255,255,255)
 
 #enemies
 ENEMY_SIZE = 16
+
+#combat
+DMG_VARIANCE = 1
+CRIT_CHANCE = 0.10
+CRIT_MULT = 1.5

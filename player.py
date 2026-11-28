@@ -10,9 +10,28 @@ class Player:
         self.inventory = {}
         self.stats = Stats("Hero", 30,6,2)
         self.xp = 0
+        self.level = 1
 
     def rect(self):
         return pygame.Rect(int(self.pos.x), int(self.pos.y), self.size, self.size)
+
+    def xp_to_next(self):
+        return 10 * self.level
+
+    def gain_xp(self, amount):
+        self.xp += amount
+        gained = 0
+        while self.xp >= self.xp_to_next():
+            self.xp -= self.xp_to_next()
+            self.level += 1
+            gained += 1
+            s = self.stats
+            s.max_hp += 5
+            s.hp = min(s.max_hp, s.hp+5)
+            s.attack += 1
+            if self.level % 2 ==0:
+                s.defense += 1
+        return gained
 
     def blocked(self,world,npcs):
         r = self.rect()

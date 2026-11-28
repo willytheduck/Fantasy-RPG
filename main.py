@@ -127,8 +127,6 @@ while running:
     if state == "combat" and battle.result:
         res = battle.result
         if res == "win":
-            player.coins += battle_stats.coin_reward
-            player.xp += battle_stats.xp_reward
             enemies.remove(battle_enemy)
         elif res == "flee":
             battle_enemy.cooldown = 2.5
@@ -205,6 +203,7 @@ while running:
                 canvas.blit(prompt, (int(px), int(py)))
             # HUD
             hud = (
+                "LV " + str(player.level) +
                 "HP "
                 + str(player.stats.hp)
                 + "/"
